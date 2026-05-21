@@ -1,0 +1,329 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  action      String
+  entity      String
+  entityId    String?
+  description String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
+  @@index([action])
+}
+
+model User {
+  id                      Int                       @id @default(autoincrement())
+  user_email              String                    @unique
+  user_password           String
+  createdAt               DateTime                  @default(now())
+  updatedat               DateTime                  @updatedAt
+  role                    String
+  isActive                Boolean                   @default(true)
+  activityLogs            ActivityLog[]
+  boundaryUploads         BoundaryShapefileUpload[] @relation("BoundaryUploader")
+  uploads                 file_uploads[]
+  zoningBoundariesCreated ZoningBoundary[]          @relation("ZoningCreator")
+  zoningUploads           ZoningShapefileUpload[]   @relation("ZoningUploader")
+}
+
+model file_uploads {
+  id         Int          @id @default(autoincrement())
+  filename   String
+  fileHash   String       @unique
+  uploadedAt DateTime     @default(now())
+  uploaderId Int
+  CirasData  ciras_data[]
+  uploader   User         @relation(fields: [uploaderId], references: [id])
+}
+
+model ciras_data {
+  blotterno     String         @id
+  dateEncoded   DateTime       @default(now())
+  municipal     String
+  barangay      String
+  typeofPlace   String
+  dateReported  DateTime?      @db.Date
+  timeReported  DateTime?      @db.Time(6)
+  dateCommitted DateTime?      @db.Date
+  timeCommitted DateTime?      @db.Time(6)
+  incidentType  String
+  offense       String?
+  offenseType   String?
+  lat           Decimal?
+  lng           Decimal?
+  fileId        Int?
+  weightId      Int?
+  uploadedFrom  file_uploads?  @relation(fields: [fileId], references: [id])
+  weight        crime_weights? @relation(fields: [weightId], references: [cw_id])
+}
+
+model population {
+  pop_id     Int    @id
+  barangays  String
+  type       String
+  population Int
+}
+
+model crime_weights {
+  cw_id   Int          @id @default(autoincrement())
+  offense String       @unique
+  weight  Int?
+  crimes  ciras_data[]
+
+  @@index([offense])
+}
+
+model Position {
+  id        Int         @id @default(autoincrement())
+  name      String      @unique @db.VarChar(50)
+  rank      Int?        @default(0)
+  canPatrol Boolean?    @default(true)
+  isActive  Boolean?    @default(true)
+  createdAt DateTime?   @default(now()) @db.Timestamp(6)
+  updatedAt DateTime?   @default(now()) @updatedAt @db.Timestamp(6)
+  personnel Personnel[]
+
+  @@index([rank])
+  @@map("positions")
+}
+
+model Role {
+  id               Int         @id @default(autoincrement())
+  name             String      @unique @db.VarChar(50)
+  canPatrol        Boolean?    @default(true)
+  canPatrolAtNight Boolean?    @default(false)
+  isActive         Boolean?    @default(true)
+  createdAt        DateTime?   @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime?   @default(now()) @updatedAt @db.Timestamp(6)
+  personnel        Personnel[]
+
+  @@map("roles")
+}
+
+model Personnel {
+  id               Int                   @id @default(autoincrement())
+  name             String
+  contact          String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  isActive         Boolean               @default(true)
+  isAvailable      Boolean               @default(true)
+  dutyDays         String?
+  positionId       Int                   @default(3) @map("position_id")
+  roleId           Int                   @default(1) @map("role_id")
+  deploymentShifts DeploymentRoster[]
+  lastShift        LastShift?
+  schedules        PersonnelOnSchedule[]
+  weeklyHours      WeeklyHours[]
+  position         Position              @relation(fields: [positionId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_personnel_position")
+  role             Role                  @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_personnel_role")
+
+  @@index([positionId])
+  @@index([roleId])
+  @@map("personnel")
+}
+
+model patrolCar {
+  id               Int               @id @default(autoincrement())
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  name             String            @unique
+  isActive         Boolean           @default(true)
+  isAvailable      Boolean           @default(true)
+  type             String            @default("patrol-car")
+  capacity         Int               @default(4)
+  plateNumber      String?           @db.VarChar(255)
+  deploymentShifts DeploymentShift[]
+  patrolSchedule   patrolSchedule[]
+}
+
+model patrolSchedule {
+  id        Int                   @id @default(autoincrement())
+  timeSlot  String
+  date      DateTime
+  areas     String[]
+  carId     Int
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  personnel PersonnelOnSchedule[]
+  patrolCar patrolCar             @relation(fields: [carId], references: [id])
+
+  @@index([carId])
+}
+
+model PersonnelOnSchedule {
+  personnelId Int            @map("personnel_id")
+  scheduleId  Int            @map("schedule_id")
+  assignedAt  DateTime       @default(now())
+  personnel   Personnel      @relation(fields: [personnelId], references: [id])
+  schedule    patrolSchedule @relation(fields: [scheduleId], references: [id])
+
+  @@id([personnelId, scheduleId])
+  @@index([personnelId])
+  @@index([scheduleId])
+}
+
+model WeeklyHours {
+  id            Int       @id @default(autoincrement())
+  personnelId   Int
+  weekStartDate DateTime
+  hours         Float     @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  personnel     Personnel @relation(fields: [personnelId], references: [id])
+
+  @@unique([personnelId, weekStartDate])
+  @@index([personnelId])
+  @@index([weekStartDate])
+}
+
+model LastShift {
+  id          Int       @id @default(autoincrement())
+  personnelId Int       @unique
+  date        DateTime
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  personnel   Personnel @relation(fields: [personnelId], references: [id])
+
+  @@index([personnelId])
+  @@index([date])
+}
+
+model DeploymentPlan {
+  id            String            @id @default(uuid())
+  runId         String            @unique
+  weekStartDate DateTime
+  plan_type     String?
+  parameters    Json
+  createdAt     DateTime          @default(now())
+  shifts        DeploymentShift[]
+}
+
+model DeploymentShift {
+  id            String             @id @default(uuid())
+  planId        String
+  date          DateTime
+  dayOfWeek     String
+  timeSlot      String
+  lat           Decimal
+  lng           Decimal
+  locationLabel String
+  patrolCarId   Int
+  officers      DeploymentRoster[]
+  patrolCar     patrolCar          @relation(fields: [patrolCarId], references: [id])
+  plan          DeploymentPlan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+  @@index([date])
+}
+
+model DeploymentRoster {
+  id          String          @id @default(uuid())
+  shiftId     String
+  personnelId Int
+  personnel   Personnel       @relation(fields: [personnelId], references: [id])
+  shift       DeploymentShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@unique([shiftId, personnelId])
+}
+
+model Boundary {
+  id          Int                     @id @default(autoincrement())
+  objectId    Int?                    @map("object_id")
+  featureId   Int?                    @map("feature_id")
+  tempMun     String?                 @map("temp_mun") @db.VarChar(10)
+  tempProv    String?                 @map("temp_prov") @db.VarChar(10)
+  tempBrgy    String?                 @map("temp_brgy") @db.VarChar(10)
+  brgyName    String?                 @unique @map("brgy_name") @db.VarChar(255)
+  shapeLength Decimal?                @map("shape_length") @db.Decimal(20, 10)
+  shapeArea   Decimal?                @map("shape_area") @db.Decimal(20, 10)
+  population  Int                     @default(0)
+  geometry    Unsupported("geometry")
+  properties  Json?
+  createdAt   DateTime                @default(now()) @map("created_at")
+  updatedAt   DateTime                @updatedAt @map("updated_at")
+
+  @@index([brgyName])
+  @@index([geometry], type: Gist)
+  @@index([properties], type: Gin)
+  @@map("boundaries")
+}
+
+model BoundaryShapefileUpload {
+  id         Int      @id @default(autoincrement())
+  filename   String   @db.VarChar(255)
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+  uploadedBy Int?     @map("uploaded_by")
+  uploader   User?    @relation("BoundaryUploader", fields: [uploadedBy], references: [id])
+
+  @@index([uploadedAt(sort: Desc)], map: "idx_boundary_uploads_date")
+  @@map("boundary_shapefile_uploads")
+}
+
+model BarangayAdjacency {
+  id           Int      @id @default(autoincrement())
+  barangayA    String   @map("barangay_a") @db.VarChar(255)
+  barangayB    String   @map("barangay_b") @db.VarChar(255)
+  borderLength Float?   @map("border_length")
+  distance     Float?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([barangayA, barangayB], name: "unique_adjacency")
+  @@index([barangayA])
+  @@index([barangayB])
+  @@map("barangay_adjacency")
+}
+
+model ZoningBoundary {
+  id              Int                     @id @default(autoincrement())
+  zoneCode        String                  @map("zone_code") @db.VarChar(100)
+  zoneName        String                  @map("zone_name") @db.VarChar(200)
+  landUseCategory String                  @map("land_use_category") @db.VarChar(100)
+  geometry        Unsupported("geometry")
+  areaSqm         Decimal?                @map("area_sqm") @db.Decimal(12, 2)
+  createdAt       DateTime                @default(now()) @map("created_at")
+  updatedAt       DateTime                @default(now()) @updatedAt @map("updated_at")
+  createdBy       Int?                    @map("created_by")
+  creator         User?                   @relation("ZoningCreator", fields: [createdBy], references: [id])
+
+  @@index([zoneCode], map: "idx_zoning_code")
+  @@index([landUseCategory], map: "idx_zoning_land_use")
+  @@map("zoning_boundaries")
+}
+
+model ZoningShapefileUpload {
+  id               Int      @id @default(autoincrement())
+  filename         String   @db.VarChar(255)
+  featuresInserted Int?     @default(0) @map("features_inserted")
+  uploadedAt       DateTime @default(now()) @map("uploaded_at")
+  uploadedBy       Int?     @map("uploaded_by")
+  uploader         User?    @relation("ZoningUploader", fields: [uploadedBy], references: [id])
+
+  @@index([uploadedAt(sort: Desc)], map: "idx_zoning_uploads_date")
+  @@map("zoning_shapefile_uploads")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}

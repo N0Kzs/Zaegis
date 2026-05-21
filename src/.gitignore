@@ -1,0 +1,28 @@
+# ── Python ──────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+.venv/
+venv/
+env/
+*.whl
+
+# ── Trained ML models (large binaries) ─────────────
+flask/app/ml_models/trained_models/
+
+# ── IDE / Editor ────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS junk ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Misc logs ───────────────────────────────────────
+*.log
