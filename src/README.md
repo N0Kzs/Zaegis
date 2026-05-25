@@ -1,6 +1,6 @@
-# Deployment Decision Support System (DSS)
+# Zaegis
 
-Welcome to the **Deployment Decision Support System (DSS)**, a comprehensive thesis package library designed to optimize resource allocation, map crime data, and manage personnel deployments.
+Welcome to **Zaegis**, a comprehensive thesis package library designed to optimize resource allocation, map crime data, and manage personnel deployments.
 
 This system is built with a Next.js frontend (App Router) for robust interactive dashboards and data processing.
 
