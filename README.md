@@ -36,9 +36,27 @@ Parent, M., et al. (2020). Designing an Explainable Predictive Policing Model to
 
 Our Thesis Manuscript and User Manual are available on `/doc`.
 
-## Cite Our Project
-Convert the following bibtex to APA | MLA 
+## Acknowledgements
 
+We would like to express our deepest gratitude to the following individuals who made this study possible:
+
+| Name | Contributions |
+| :--- | :--- |
+| **Engr. Erwin D. Osorio** | For his unwavering support, invaluable guidance, and expertise as our Thesis Adviser. |
+| **PMAJ Harold Rendora** | For authorizing the conduct of our research and granting us access to the Pavia Municipal Police Station. |
+| **PSSg Christian Henry J. Corpus** | For sharing his extensive expertise in police deployment planning and operational procedures. |
+| **PSMS Myrna J Rebuelta** | For her invaluable insights and expertise in the field of crime analytics. |
+| **NUP Norielyn F. Fabroa** | For facilitating and providing crucial access to the Crime Information Reporting and Analysis System (CIRAS) data. |
+
+## Cite Our Project
+
+**APA (7th Edition)**
+> Calaor, N., Daligdig, R. M., Eulatriz, L. J., Mangonon, M. C., & Muyco, O. B. (2026). *Zaegis: Decision support system for optimized police deployment through crime pattern analysis, predictive policing and manpower allocation* [Bachelor's thesis, West Visayas State University College of Information and Communications Technology].
+
+**MLA (9th Edition)**
+> Calaor, Nadinne, et al. *Zaegis: Decision Support System for Optimized Police Deployment Through Crime Pattern Analysis, Predictive Policing and Manpower Allocation*. 2026. West Visayas State University College of Information and Communications Technology, Bachelor's thesis.
+
+**BibTeX**
 ```bibtex
 @article{article,
   type={Bachelor's Thesis},
@@ -48,6 +66,3 @@ Convert the following bibtex to APA | MLA
   address = {La Paz, Iloilo City, Iloilo, Philippines},
   year = {2026}
 }
-```
-
-2026 © Calaor, Daligdig, Eulatriz, Mangonon, Muyco - West Visayas State University - College of Information and Communications Technology. All Rights Reserved.
